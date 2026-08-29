@@ -21,7 +21,7 @@ function nav(){
     b.setAttribute("aria-label",o?"Close menu":"Open menu");
     if(o&&links.length)links[0].focus();
   };
-  links.forEach(a=>a.onclick=close);
+  links.forEach(a=>a.onclick=()=>{close()});
   n.addEventListener("keydown",e=>{
     if(!n.classList.contains("open"))return;
     if(e.key==="Escape"){
@@ -57,13 +57,15 @@ function counters(){
 }
 
 function tabs(){
-  const bs=[...document.querySelectorAll("#tabs button")],n=document.querySelector("#stepNum"),t=document.querySelector("#stepTitle"),c=document.querySelector("#stepCopy");
+  const bs=[...document.querySelectorAll("#tabs button")],tabsEl=document.querySelector("#tabs"),n=document.querySelector("#stepNum"),t=document.querySelector("#stepTitle"),c=document.querySelector("#stepCopy");
   if(!bs.length)return;
+  tabsEl?.setAttribute("role","tablist");
   const d=[["STEP 01","Discover the real problem.","We align on goals, audiences and constraints, then turn research into a shared understanding of what success needs to look like."],["STEP 02","Define the opportunity.","We shape priorities, architecture and a practical roadmap so everyone knows what we're making and why."],["STEP 03","Design the experience.","We prototype, test and refine the visual and interaction system until the product feels clear, useful and unmistakably yours."],["STEP 04","Build and deliver.","Our developers turn the system into a fast, accessible experience, then QA, launch and measure the result."]];
   bs.forEach((b,i)=>{
     b.setAttribute("aria-selected",String(i===0));
     b.setAttribute("role","tab");
-    b.onclick=()=>{bs.forEach(x=>{x.classList.remove("active");x.setAttribute("aria-selected","false")});b.classList.add("active");b.setAttribute("aria-selected","true");[n.textContent,t.textContent,c.textContent]=d[i]}
+    b.setAttribute("tabindex",i===0?"0":"-1");
+    b.onclick=()=>{bs.forEach(x=>{x.classList.remove("active");x.setAttribute("aria-selected","false");x.setAttribute("tabindex","-1")});b.classList.add("active");b.setAttribute("aria-selected","true");b.setAttribute("tabindex","0");[n.textContent,t.textContent,c.textContent]=d[i]};
   });
 }
 
@@ -76,13 +78,17 @@ function modals(){
   let trigger=null;
   const close=()=>{
     m.setAttribute("aria-hidden","true");
-    if(trigger){trigger.focus();trigger=null}
+    const returnTarget=trigger||window.vertexModalTrigger;
+    trigger=null;
+    window.vertexModalTrigger=null;
+    returnTarget?.focus();
   };
   const open=(card)=>{
     trigger=card;
-    title?.textContent=card.dataset.title||"";
-    k&&(k.textContent=card.dataset.kicker||card.dataset.role||"");
-    copy&&(copy.textContent=card.dataset.copy||"");
+    window.vertexModalTrigger=card;
+    if(title)title.textContent=card.dataset.title||"";
+    if(k)k.textContent=card.dataset.kicker||card.dataset.role||"";
+    if(copy)copy.textContent=card.dataset.copy||"";
     if(metric){metric.textContent=card.dataset.metric||"";metric.style.display=card.dataset.metric?"block":"none"}
     m.setAttribute("aria-hidden","false");
     m.setAttribute("role","dialog");
@@ -118,6 +124,7 @@ function forms(){
   f.onsubmit=e=>{
     e.preventDefault();
     if(!f.checkValidity()){f.reportValidity();return}
+    window.vertexModalTrigger=f.querySelector('button[type="submit"]');
     m.setAttribute("aria-hidden","false");
     m.setAttribute("role","dialog");
     m.setAttribute("aria-modal","true");
